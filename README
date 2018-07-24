@@ -1,0 +1,4 @@
+# Puppet Enterprise com Puppet Tasks
+
+Utilizando o agente do pcp-agent e o Orchastrator do Puppet Enterprise para enviar comandos do Puppet Tasks.
+

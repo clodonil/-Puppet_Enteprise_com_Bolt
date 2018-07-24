@@ -1,0 +1,52 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+Vagrant.configure("2") do |config|
+  #  Configure base
+  config.vm.box = 'centos/7'
+  config.ssh.forward_agent = true
+  config.ssh.insert_key = false
+
+  # nodes
+  $node_count = 2
+  (1..$node_count).each do |id|
+     config.vm.define "node#{id}" do |nodes|
+         nodes.vm.hostname = "node#{id}.vm"
+         nodes.vm.network :private_network, :ip => "192.168.77.#{20+id}"
+         nodes.vm.provision :hosts, :sync_hosts => true
+
+         # Add nodes in Puppet master
+         nodes.vm.provision "shell", inline: "curl -k https://master.vm:8140/packages/current/install.bash | sudo bash"
+
+    end
+ end
+
+  # Puppet Enterprise 2018 and Puppet Tasks
+  config.vm.define "master" do |master|
+      master.vm.hostname = "master.vm"
+      master.vm.network :private_network, :ip => "192.168.77.100"
+      master.vm.provision :hosts, :sync_hosts => true
+
+
+      # Start of Vault in mode Dev
+      master.vm.provision "shell", path: "./PuppetServer/install.sh"
+
+
+      master.vm.provider :virtualbox do |setting|
+           setting.memory = 4028
+           setting.cpus = 2
+      end
+   end
+
+  # Tools of DevOps
+  config.vm.define "devops" do |devops|
+      devops.vm.hostname = "devops.vm"
+      devops.vm.network :private_network, :ip => "192.168.77.200"
+      devops.vm.provision :hosts, :sync_hosts => true
+
+      # Install of Puppet Bolt
+      devops.vm.provision "shell", inline: "rpm -ivh http://yum.puppet.com/puppet5/puppet5-release-el-7.noarch.rpm &&  yum -y install puppet-bolt"
+   end
+end
+
